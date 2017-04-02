@@ -2,7 +2,7 @@ import {has, get} from 'dot-prop';
 import isPlainObject from 'is-plain-obj';
 import s from 'spots';
 
-// Inspired by https://github.com/vuejs/vue/tree/dev/test/unit/modules/observer.
+// Inspired by Vue.js (https://vuejs.org).
 
 const targets = [];
 
