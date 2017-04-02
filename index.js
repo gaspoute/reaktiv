@@ -253,7 +253,7 @@ function unset(object, key) {
 	notify(dependency);
 }
 
- function teardown(watcher) {
+function teardown(watcher) {
 	const {active, dependencies} = watcher;
 	if (!active) {
 		return;
