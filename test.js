@@ -1,13 +1,14 @@
 import {expect} from 'chai';
 import {spy} from 'sinon';
 import {targets, observe, watch, set, unset, teardown} from './index';
-import {has, get} from 'dot-prop';
-import s from 'spots';
+import dotProp from 'dot-prop';
+
+const {has, get} = dotProp;
 
 function mock(object, path) {
 	return {
 		object,
-		getter: s(get, object, path),
+		getter: () => get(object, path),
 		update: spy(),
 		deep: false,
 		lazy: false,
@@ -31,9 +32,9 @@ describe('observe', () => {
 			b: {}
 		};
 		const observed1 = observe(object);
-		expect(observed1.dependency).to.exist;
-		expect(observed1.a.dependency).to.exist;
-		expect(observed1.b.dependency).to.exist;
+		expect(observed1._dependency).to.exist;
+		expect(observed1.a._dependency).to.exist;
+		expect(observed1.b._dependency).to.exist;
 		const observed2 = observe(object);
 		expect(observed2).to.equal(observed1);
 	});
@@ -42,9 +43,9 @@ describe('observe', () => {
 		object.a = {};
 		object.b = {};
 		const observed1 = observe(object)
-		expect(observed1.dependency).to.exist;
-		expect(object.a.dependency).to.exist;
-		expect(object.b.dependency).to.exist;
+		expect(observed1._dependency).to.exist;
+		expect(object.a._dependency).to.exist;
+		expect(object.b._dependency).to.exist;
 		const observed2 = observe(object);
 		expect(observed2).to.equal(observed1);
 	});
@@ -64,7 +65,7 @@ describe('observe', () => {
 			}
 		});
 		const observed1 = observe(object);
-		expect(observed1.dependency).to.exist;
+		expect(observed1._dependency).to.exist;
 		count = 0;
 		get(object, 'a');
 		expect(count).to.equal(1);
@@ -85,7 +86,7 @@ describe('observe', () => {
 			}
 		});
 		const observed1 = observe(object);
-		expect(observed1.dependency).to.exist;
+		expect(observed1._dependency).to.exist;
 		expect(object.a).to.equal(123);
 		const observed2 = observe(object);
 		expect(observed2).to.equal(observed1);
@@ -103,7 +104,7 @@ describe('observe', () => {
 			}
 		});
 		const observed1 = observe(object);
-		expect(observed1.dependency).to.exist;
+		expect(observed1._dependency).to.exist;
 		expect(object.a).to.be.undefined;
 		const observed2 = observe(object);
 		expect(observed2).to.equal(observed1);
@@ -113,9 +114,9 @@ describe('observe', () => {
 	it('should observe an array', () => {
 		const array = [{}, {}];
 		const observed1 = observe(array);
-		expect(observed1.dependency).to.exist;
-		expect(array[0].dependency).to.exist;
-		expect(array[1].dependency).to.exist;
+		expect(observed1._dependency).to.exist;
+		expect(array[0]._dependency).to.exist;
+		expect(array[1]._dependency).to.exist;
 	});
 	it('should observe an object property change', () => {
 		const object = {a: {b: 2}, c: NaN};

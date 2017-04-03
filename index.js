@@ -1,6 +1,7 @@
-import {has, get} from 'dot-prop';
+import dotProp from 'dot-prop';
 import isPlainObject from 'is-plain-obj';
-import s from 'spots';
+
+const {has, get} = dotProp;
 
 // Inspired by Vue.js (https://vuejs.org).
 
@@ -22,7 +23,7 @@ function reactive(object, key, value = object[key]) {
 			if (target) {
 				depend(dependency, target);
 				if (deep) {
-					depend(deep.dependency, target);
+					depend(value._dependency, target);
 				}
 				if (Array.isArray(value)) {
 					dependEach(value, target);
@@ -31,27 +32,23 @@ function reactive(object, key, value = object[key]) {
 			return getter ? getter.call(object) : value;
 		},
 		set(newValue) {
-			const {subscriptions} = dependency
 			if (setter) {
 				setter.call(object, newValue);
 			} else {
 				value = newValue;
 			}
 			deep = observe(newValue);
-			Object.assign(dependency, {
-				subscriptions: subscriptions.filter(isActiveSubscription(dependency))
-			});
+			const subscriptions = dependency.subscriptions.filter(isActiveSubscription(dependency));
+			Object.assign(dependency, {subscriptions});
 			notify(dependency);
 		}
 	});
 }
 
 function dependEach(values, watcher) {
-	for (let i = 0; i < values.length; ++i) {
-		const value = values[i];
-		const {dependency} = value;
-		if (dependency) {
-			depend(dependency, watcher);
+	for (const value of values) {
+		if (value._dependency) {
+			depend(value._dependency, watcher);
 		}
 		if (Array.isArray(value)) {
 			dependEach(value, watcher);
@@ -60,25 +57,19 @@ function dependEach(values, watcher) {
 }
 
 function depend(dependency, watcher) {
-	const {subscriptions} = dependency;
-	if (!subscriptions.includes(watcher)) {
-		subscriptions.push(watcher);
+	if (!dependency.subscriptions.includes(watcher)) {
+		dependency.subscriptions.push(watcher);
 	}
-	const {dependencies} = watcher;
-	if (!dependencies.includes(dependency)) {
-		dependencies.push(dependency);
+	if (!watcher.dependencies.includes(dependency)) {
+		watcher.dependencies.push(dependency);
 	}
 }
 
 function isActiveSubscription(dependency) {
-	return subscription => {
-		const {dependencies} = subscription;
-		return dependencies.includes(dependency);
-	};
+	return subscription => subscription.dependencies.includes(dependency);
 }
 
-function notify(dependency) {
-	const {subscriptions} = dependency;
+function notify({subscriptions}) {
 	for (const subscription of subscriptions) {
 		inform(subscription);
 	}
@@ -88,43 +79,33 @@ function observe(value) {
 	if ((!isPlainObject(value) && !Array.isArray(value)) || !Object.isExtensible(value)) {
 		return;
 	}
-	if (has(value, 'dependency')) {
+	if (value._dependency) {
 		return value;
 	}
-	const dependency = {subscriptions: []};
-	Object.defineProperty(value, 'dependency', {
-		value: dependency
-	});
+	Object.defineProperty(value, '_dependency', {value: {subscriptions: []}});
 	if (Array.isArray(value)) {
 		observeEach(value);
 	} else {
-		const keys = Object.keys(value);
-		for (const key of keys) {
-			make(value, key, value[key]);
+		for (const key of Object.keys(value)) {
+			make(value, key);
 		}
 	}
 	return value;
 }
 
 function observeEach(values) {
-	for (let i = 0; i < values.length; ++i) {
-		observe(values[i]);
+	for (const value of values) {
+		observe(value);
 	}
 }
 
-function make(object, key, value) {
-	if (typeof value === 'function') {
-		return computed(object, key);
-	}
-	return reactive(object, key);
+function make(object, key) {
+	return typeof object[key] === 'function' ? computed(object, key) : reactive(object, key);
 }
 
 function watch(object, path, update, options = {}) {
-	const {
-		deep = false,
-		lazy = false
-	} = options;
-	const getter = typeof path === 'function' ? path : s(get, object, path);
+	const {deep = false, lazy = false} = options;
+	const getter = typeof path === 'function' ? path : () => get(object, path);
 	const watcher = {
 		object,
 		getter,
@@ -135,16 +116,13 @@ function watch(object, path, update, options = {}) {
 		dirty: lazy,
 		dependencies: [] // The properties the watcher is depending on.
 	};
-	return Object.assign(watcher, {
-		value: lazy ? undefined : getValue(watcher, options)
-	});
+	return Object.assign(watcher, {value: lazy ? undefined : getValue(watcher, options)});
 }
 
 function getValue(watcher) {
-	const {getter, deep} = watcher;
 	targets.push(watcher);
-	const value = getter();
-	if (deep) {
+	const value = watcher.getter();
+	if (watcher.deep) {
 		traverse(value);
 	}
 	targets.pop();
@@ -155,18 +133,16 @@ function traverse(value, seen = []) {
 	if ((!isPlainObject(value) && !Array.isArray(value)) || !Object.isExtensible(value)) {
 		return;
 	}
-	const {dependency} = value;
-	if (dependency) {
-		if (seen.includes(dependency)) {
+	if (value._dependency) {
+		if (seen.includes(value._dependency)) {
 			return;
 		}
-		seen.push(dependency);
+		seen.push(value._dependency);
 	}
 	if (Array.isArray(value)) {
 		traverseEach(value, seen);
 	} else {
-		const keys = Object.keys(value);
-		for (const key of keys) {
+		for (const key of Object.keys(value)) {
 			traverse(value[key], seen);
 		}
 	}
@@ -179,16 +155,14 @@ function traverseEach(values, seen) {
 }
 
 function inform(watcher) {
-	const {update, active, deep, lazy, value: oldValue} = watcher;
-	if (lazy) {
-		Object.assign(watcher, {
-			dirty: true
-		});
-	} else if (active) {
+	const {value: oldValue} = watcher;
+	if (watcher.lazy) {
+		Object.assign(watcher, {dirty: true});
+	} else if (watcher.active) {
 		const value = getValue(watcher);
-		if (oldValue !== value || isPlainObject(value) || deep) {
+		if (oldValue !== value || isPlainObject(value) || watcher.deep) {
 			Object.assign(watcher, {value});
-			update(value, oldValue);
+			watcher.update(value, oldValue);
 		}
 	}
 }
@@ -207,18 +181,16 @@ function computed(object, key) {
 		configurable: true,
 		enumerable: true,
 		get() {
-			const {dirty, dependencies} = watcher;
-			if (dirty) {
+			if (watcher.dirty) {
 				evaluate(watcher);
 			}
 			const target = peek(targets);
 			if (target) {
-				for (const dependency of dependencies) {
+				for (const dependency of watcher.dependencies) {
 					depend(dependency, target);
 				}
 			}
-			const {value} = watcher;
-			return value;
+			return watcher.value;
 		},
 		set() {
 			// Nothing to do !
@@ -231,13 +203,12 @@ function set(object, key, value) {
 		object[key] = value;
 		return value;
 	}
-	const {dependency} = object;
-	if (!dependency) {
+	if (!object._dependency) {
 		object[key] = value;
 		return value;
 	}
 	reactive(object, key, value);
-	notify(dependency);
+	notify(object._dependency);
 	return value;
 }
 
@@ -246,27 +217,21 @@ function unset(object, key) {
 		return;
 	}
 	delete object[key];
-	const {dependency} = object;
-	if (!dependency) {
+	if (!object._dependency) {
 		return;
 	}
-	notify(dependency);
+	notify(object._dependency);
 }
 
 function teardown(watcher) {
-	const {active, dependencies} = watcher;
-	if (!active) {
+	if (!watcher.active) {
 		return;
 	}
-	for (const dependency of dependencies) {
-		const {subscriptions} = dependency;
-		Object.assign(dependency, {
-			subscriptions: subscriptions.filter(subscription => subscription !== watcher)
-		});
+	for (const dependency of watcher.dependencies) {
+		const subscriptions = dependency.subscriptions.filter(subscription => subscription !== watcher);
+		Object.assign(dependency, {subscriptions});
 	}
-	Object.assign(watcher, {
-		active: false
-	});
+	Object.assign(watcher, {active: false});
 }
 
 export {targets, observe, watch, computed, set, unset, teardown};
