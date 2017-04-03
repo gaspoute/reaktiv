@@ -12,7 +12,7 @@ function peek(stack) {
 }
 
 function reactive(object, key, value = object[key]) {
-	const dependency = {subscriptions: []}; // The watchers that depend on me.
+	const dependency = {object, key, subscriptions: []}; // The watchers that depend on me.
 	const {get: getter, set: setter} = Object.getOwnPropertyDescriptor(object, key) || {};
 	let deep = observe(value);
 	return Object.defineProperty(object, key, {
@@ -38,8 +38,6 @@ function reactive(object, key, value = object[key]) {
 				value = newValue;
 			}
 			deep = observe(newValue);
-			const subscriptions = dependency.subscriptions.filter(isActiveSubscription(dependency));
-			Object.assign(dependency, {subscriptions});
 			notify(dependency);
 		}
 	});
@@ -65,10 +63,6 @@ function depend(dependency, watcher) {
 	}
 }
 
-function isActiveSubscription(dependency) {
-	return subscription => subscription.dependencies.includes(dependency);
-}
-
 function notify({subscriptions}) {
 	for (const subscription of subscriptions) {
 		inform(subscription);
@@ -82,7 +76,8 @@ function observe(value) {
 	if (value._dependency) {
 		return value;
 	}
-	Object.defineProperty(value, '_dependency', {value: {subscriptions: []}});
+	const _dependency = {value, subscriptions: []};
+	Object.defineProperty(value, '_dependency', {value: _dependency});
 	if (Array.isArray(value)) {
 		observeEach(value);
 	} else {
@@ -108,22 +103,33 @@ function watch(object, path, update, options = {}) {
 	const getter = typeof path === 'function' ? path : () => get(object, path);
 	const watcher = {
 		object,
-		getter,
+		path,
 		update,
 		deep,
 		lazy,
 		active: true,
 		dirty: lazy,
-		dependencies: [] // The properties the watcher is depending on.
+		dependencies: [], // The properties the watcher is depending on.
+		getter
 	};
 	return Object.assign(watcher, {value: lazy ? undefined : getValue(watcher, options)});
 }
 
 function getValue(watcher) {
 	targets.push(watcher);
+	const oldDependencies = [...watcher.dependencies];
+	watcher.dependencies.length = 0;
 	const value = watcher.getter();
 	if (watcher.deep) {
 		traverse(value);
+	}
+	for (const oldDependency of oldDependencies.filter(oldDependency => !watcher.dependencies.includes(oldDependency))) {
+		const index = oldDependency.subscriptions.indexOf(watcher);
+		const subscriptions = [
+			...oldDependency.subscriptions.slice(0, index),
+			...oldDependency.subscriptions.slice(index + 1)
+		];
+		Object.assign(oldDependency, {subscriptions});
 	}
 	targets.pop();
 	return value;
