@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "dot-prop": "^4.1.1",
-    "is-plain-obj": "^1.1.0",
-    "spots": "^0.5.0"
+    "is-plain-obj": "^1.1.0"
   }
 }
