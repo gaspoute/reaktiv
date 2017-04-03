@@ -123,6 +123,12 @@ function getValue(watcher) {
 	if (watcher.deep) {
 		traverse(value);
 	}
+	cleanUp(watcher, oldDependencies);
+	targets.pop();
+	return value;
+}
+
+function cleanUp(watcher, oldDependencies) {
 	for (const oldDependency of oldDependencies.filter(oldDependency => !watcher.dependencies.includes(oldDependency))) {
 		const index = oldDependency.subscriptions.indexOf(watcher);
 		const subscriptions = [
@@ -131,8 +137,7 @@ function getValue(watcher) {
 		];
 		Object.assign(oldDependency, {subscriptions});
 	}
-	targets.pop();
-	return value;
+
 }
 
 function traverse(value, seen = []) {
