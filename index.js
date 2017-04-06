@@ -245,4 +245,4 @@ function teardown(watcher) {
 	Object.assign(watcher, {active: false});
 }
 
-export {targets, observe, watch, computed, set, unset, teardown};
+export {targets, observe, watch, set, unset, teardown};
