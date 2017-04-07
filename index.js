@@ -234,7 +234,7 @@ function unset(object, key) {
 	notify(object._dependency);
 }
 
-function teardown(watcher) {
+function ignore(watcher) {
 	if (!watcher.active) {
 		return;
 	}
@@ -245,4 +245,4 @@ function teardown(watcher) {
 	Object.assign(watcher, {active: false});
 }
 
-export {targets, observe, watch, set, unset, teardown};
+export {targets, observe, watch, ignore, set, unset};

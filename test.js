@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {spy} from 'sinon';
-import {targets, observe, watch, set, unset, teardown} from './index';
+import {targets, observe, watch, ignore, set, unset} from './index';
 import dotProp from 'dot-prop';
 
 const {has, get} = dotProp;
@@ -319,15 +319,15 @@ describe('watch', () => {
 		data.b.c = 3;
 		expect(watcher.active).to.be.true;
 		expect(update.callCount).to.equal(1);
-		teardown(watcher);
+		ignore(watcher);
 		expect(watcher.active).to.be.false;
 		expect(update.callCount).to.equal(1);
 	});
 	it('should tear down an inactive watcher', () => {
 		const watcher = watch(data, 'b.c', update);
-		teardown(watcher);
+		ignore(watcher);
 		expect(watcher.active).to.be.false;
-		teardown(watcher);
+		ignore(watcher);
 		expect(watcher.active).to.be.false;
 		expect(update.notCalled).to.be.true;
 	});

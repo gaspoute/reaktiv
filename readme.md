@@ -4,7 +4,7 @@
 
 ## Usage
 ```javascript
-import {observe, set, unset, watch, teardown} from 'reaktiv';
+import {observe, set, unset, watch, ignore} from 'reaktiv';
 
 const data = {
   firstName: 'Bar',
@@ -32,7 +32,7 @@ unset(data, 'age'); // Delete a property
 
 console.log(data.age); // undefined
 
-teardown(watcher); // Unsubscribe the watcher from all its dependencies
+ignore(watcher); // Unsubscribe the watcher from all its dependencies
 ```
 ## API
 ### observe(object)
@@ -71,5 +71,5 @@ Default: `false`
 
 Deeply watch the property of the object.
 
-### teardown(watcher)
+### ignore(watcher)
 Unsubscribe a watcher from all its dependencies.
