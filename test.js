@@ -7,7 +7,6 @@ const {has, get} = dotProp;
 
 function mock(object, path) {
 	return {
-		object,
 		getter: () => get(object, path),
 		update: spy(),
 		deep: false,

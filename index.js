@@ -12,7 +12,7 @@ function peek(stack) {
 }
 
 function reactive(object, key, value = object[key]) {
-	const dependency = {object, key, subscriptions: []}; // The watchers that depend on me.
+	const dependency = {subscriptions: []};
 	const {get: getter, set: setter} = Object.getOwnPropertyDescriptor(object, key) || {};
 	let deep = observe(value);
 	return Object.defineProperty(object, key, {
@@ -76,7 +76,7 @@ function observe(value) {
 	if (value._dependency) {
 		return value;
 	}
-	const _dependency = {value, subscriptions: []};
+	const _dependency = {subscriptions: []};
 	Object.defineProperty(value, '_dependency', {value: _dependency});
 	if (Array.isArray(value)) {
 		observeEach(value);
@@ -102,8 +102,6 @@ function watch(object, path, update, options = {}) {
 	const {deep = false, lazy = false} = options;
 	const getter = typeof path === 'function' ? path : () => get(object, path);
 	const watcher = {
-		object,
-		path,
 		update,
 		deep,
 		lazy,
