@@ -5,16 +5,18 @@ import dotProp from 'dot-prop';
 
 const {has, get} = dotProp;
 
-function mock(object, path) {
+function mock(object, path, update = spy(), options = {}) {
+	const {deep = false} = options;
+	const getter = () => get(object, path);
 	return {
-		getter: () => get(object, path),
-		update: spy(),
-		deep: false,
+		update,
+		deep,
 		lazy: false,
 		active: true,
-		dirty: true,
+		dirty: false,
 		dependencies: [],
-		value: get(object, path)
+		getter,
+		value: getter()
 	};
 }
 
