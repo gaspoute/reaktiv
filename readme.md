@@ -66,7 +66,8 @@ Called when the value of the watched property has changed.
 Type: `Object`
 
 ##### deep
-Type: `boolean`
+Type: `Boolean`
+
 Default: `false`
 
 Deeply watch the property of the object.
