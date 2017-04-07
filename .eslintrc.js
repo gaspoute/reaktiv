@@ -1,7 +1,6 @@
 module.exports = {
 	'env': {
 		'es6': true,
-		'node': true,
 		'mocha': true
   },
 	'parserOptions': {
@@ -9,7 +8,12 @@ module.exports = {
 	},
 	'extends': 'eslint:recommended',
 	'rules': {
-		'no-console': 'off',
-		'indent': ['error', 'tab']
+		'no-console': ['warn'],
+		'indent': ['error', 'tab'],
+		'semi': ['error', 'always'],
+		'no-multi-spaces': ['error'],
+		'no-mixed-spaces-and-tabs': ['error'],
+		'no-multiple-empty-lines': ['error'],
+		'space-before-function-paren': ['error', 'never']
 	}
 };

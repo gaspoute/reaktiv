@@ -39,7 +39,7 @@ describe('observe', () => {
 		const object = Object.create(null);
 		object.a = {};
 		object.b = {};
-		const observed1 = observe(object)
+		const observed1 = observe(object);
 		expect(observed1._dependency).to.exist;
 		expect(object.a._dependency).to.exist;
 		expect(object.b._dependency).to.exist;

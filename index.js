@@ -1,9 +1,9 @@
-import dotProp from 'dot-prop';
 import isPlainObject from 'is-plain-obj';
+import dotProp from 'dot-prop';
 
 const {has, get} = dotProp;
 
-// Inspired by Vue.js (https://vuejs.org).
+// Inspired by Vue.js (https://vuejs.org)
 
 const targets = [];
 
@@ -127,7 +127,7 @@ function getValue(watcher) {
 }
 
 function cleanUp(watcher, oldDependencies) {
-	const removedDependencies =  oldDependencies.filter(oldDependency => !watcher.dependencies.includes(oldDependency));
+	const removedDependencies = oldDependencies.filter(oldDependency => !watcher.dependencies.includes(oldDependency));
 	for (const removedDependency of removedDependencies) {
 		const index = removedDependency.subscriptions.indexOf(watcher);
 		const subscriptions = [
