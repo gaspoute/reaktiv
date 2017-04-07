@@ -213,20 +213,7 @@ describe('watch', () => {
 			e() {
 				return data.a + data.b.c;
 			},
-			f: [[]],
-			g: 1,
-			h: 2,
-			i() {
-				if (data.a === 1) {
-					return data.g;
-				}
-				if (data.a === 2) {
-					return data.h;
-				}
-				if (data.a === 3) {
-					return data.g + data.h;
-				}
-			}
+			f: [[]]
 		};
 		update = spy();
 		observe(data);
@@ -346,43 +333,5 @@ describe('watch', () => {
 		expect(update.calledWith(5, 3)).to.be.true;
 		data.b = {c: 4};
 		expect(update.calledWith(7, 5)).to.be.true;
-	});
-	it('should clean up dependencies of a object property', () => {
-		const watcher = watch(data, 'i', update);
-		expect(watcher.value).to.equal(1);
-		expect(watcher.dependencies).to.have.lengthOf(2);
-		const a = watcher.dependencies[0];
-		const g = watcher.dependencies[1];
-		expect(a).to.have.property('object', data);
-		expect(a).to.have.property('key', 'a');
-		expect(a.subscriptions).to.include(watcher);
-		expect(g).to.have.property('object', data);
-		expect(g).to.have.property('key', 'g');
-		expect(g.subscriptions).to.include(watcher);
-		data.a = 2;
-		expect(watcher.value).to.equal(2);
-		expect(update.callCount).to.equal(1);
-		expect(watcher.dependencies).to.have.lengthOf(2);
-		const h = watcher.dependencies[1];
-		expect(a).to.have.property('object', data);
-		expect(a).to.have.property('key', 'a');
-		expect(a.subscriptions).to.include(watcher);
-		expect(h).to.have.property('object', data);
-		expect(h).to.have.property('key', 'h');
-		expect(h.subscriptions).to.include(watcher);
-		expect(g.subscriptions).to.not.include(watcher);
-		data.a = 3;
-		expect(watcher.value).to.equal(3);
-		expect(update.callCount).to.equal(2);
-		expect(watcher.dependencies).to.have.lengthOf(3);
-		expect(a).to.have.property('object', data);
-		expect(a).to.have.property('key', 'a');
-		expect(a.subscriptions).to.include(watcher);
-		expect(g).to.have.property('object', data);
-		expect(g).to.have.property('key', 'g');
-		expect(g.subscriptions).to.include(watcher);
-		expect(h).to.have.property('object', data);
-		expect(h).to.have.property('key', 'h');
-		expect(h.subscriptions).to.include(watcher);
 	});
 });
