@@ -107,7 +107,7 @@ function watch(object, path, update, options = {}) {
 		lazy,
 		active: true,
 		dirty: lazy,
-		dependencies: [], // The properties the watcher is depending on.
+		dependencies: [],
 		getter
 	};
 	return Object.assign(watcher, {value: lazy ? undefined : getValue(watcher, options)});
@@ -127,13 +127,14 @@ function getValue(watcher) {
 }
 
 function cleanUp(watcher, oldDependencies) {
-	for (const oldDependency of oldDependencies.filter(oldDependency => !watcher.dependencies.includes(oldDependency))) {
-		const index = oldDependency.subscriptions.indexOf(watcher);
+	const removedDependencies =  oldDependencies.filter(oldDependency => !watcher.dependencies.includes(oldDependency));
+	for (const removedDependency of removedDependencies) {
+		const index = removedDependency.subscriptions.indexOf(watcher);
 		const subscriptions = [
-			...oldDependency.subscriptions.slice(0, index),
-			...oldDependency.subscriptions.slice(index + 1)
+			...removedDependency.subscriptions.slice(0, index),
+			...removedDependency.subscriptions.slice(index + 1)
 		];
-		Object.assign(oldDependency, {subscriptions});
+		Object.assign(removedDependency, {subscriptions});
 	}
 
 }
