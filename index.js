@@ -82,7 +82,11 @@ function observe(value) {
 		observeEach(value);
 	} else {
 		for (const key of Object.keys(value)) {
-			make(value, key);
+			if (typeof value[key] === 'function') {
+				computed(value, key);
+			} else {
+				reactive(value, key);
+			}
 		}
 	}
 	return value;
@@ -92,10 +96,6 @@ function observeEach(values) {
 	for (const value of values) {
 		observe(value);
 	}
-}
-
-function make(object, key) {
-	return typeof object[key] === 'function' ? computed(object, key) : reactive(object, key);
 }
 
 function watch(object, path, update, options = {}) {
