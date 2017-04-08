@@ -14,7 +14,8 @@ function peek(stack) {
 function reactive(object, key, value = object[key]) {
 	const dependency = {subscriptions: []};
 	const {get: getter, set: setter} = Object.getOwnPropertyDescriptor(object, key) || {};
-	let deep = observe(value);
+	const seed = object._seed || object;
+	let deep = inspect(value, {seed});
 	return Object.defineProperty(object, key, {
 		configurable: true,
 		enumerable: true,
@@ -37,7 +38,7 @@ function reactive(object, key, value = object[key]) {
 			} else {
 				value = newValue;
 			}
-			deep = observe(newValue);
+			deep = inspect(newValue, {seed});
 			notify(dependency);
 		}
 	});
@@ -70,16 +71,28 @@ function notify({subscriptions}) {
 }
 
 function observe(value) {
+	return inspect(value);
+}
+
+function inspect(value, options = {}) {
 	if ((!isPlainObject(value) && !Array.isArray(value)) || !Object.isExtensible(value)) {
 		return;
 	}
 	if (value._dependency) {
 		return value;
 	}
+	const {seed} = options;
 	const _dependency = {subscriptions: []};
 	Object.defineProperty(value, '_dependency', {value: _dependency});
+	if (!seed && !value._watchers) {
+		const _watchers = [];
+		Object.defineProperty(value, '_watchers', {value: _watchers});
+	}
+	if (seed && !value._seed) {
+		Object.defineProperty(value, '_seed', {value: seed});
+	}
 	if (Array.isArray(value)) {
-		observeEach(value);
+		inspectEach(value, options);
 	} else {
 		for (const key of Object.keys(value)) {
 			if (typeof value[key] === 'function') {
@@ -92,9 +105,9 @@ function observe(value) {
 	return value;
 }
 
-function observeEach(values) {
+function inspectEach(values, options) {
 	for (const value of values) {
-		observe(value);
+		observe(value, options);
 	}
 }
 
@@ -110,6 +123,8 @@ function watch(object, path, update, options = {}) {
 		dependencies: [],
 		getter
 	};
+	const seed = object._seed || object;
+	seed._watchers.push(watcher);
 	return Object.assign(watcher, {value: lazy ? undefined : getValue(watcher, options)});
 }
 
