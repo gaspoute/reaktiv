@@ -1,14 +1,15 @@
 module.exports = {
 	'env': {
 		'es6': true,
-		'mocha': true
+		'mocha': true,
+		'browser': true
   },
 	'parserOptions': {
 		'sourceType': 'module'
 	},
 	'extends': 'eslint:recommended',
 	'rules': {
-		'no-console': ['warn'],
+		'no-console': ['warn', {'allow': ['warn', 'error']}],
 		'indent': ['error', 'tab'],
 		'semi': ['error', 'always'],
 		'no-multi-spaces': ['error'],
