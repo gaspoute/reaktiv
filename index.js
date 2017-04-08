@@ -245,6 +245,10 @@ function unset(object, key) {
 	if (!has(object, key)) {
 		return;
 	}
+	if (!object._seed) {
+		console.warn('Cannot delete a property from a seed');
+		return;
+	}
 	delete object[key];
 	if (!object._dependency) {
 		return;
