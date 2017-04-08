@@ -232,6 +232,10 @@ function set(object, key, value) {
 		object[key] = value;
 		return value;
 	}
+	if (!object._seed) { // Cannot set a new property to a seed
+		console.warn('Cannot set a new property to a seed');
+		return value;
+	}
 	reactive(object, key, value);
 	notify(object._dependency);
 	return value;
