@@ -7,7 +7,7 @@
 import {observe, set, unset, watch, ignore} from 'reaktiv';
 
 const data = {
-  person: {
+	person: {
 		firstName: 'Bar',
 		lastName: 'Foo',
 		fullName() {
@@ -21,7 +21,7 @@ observe(data);
 console.log(data.person.fullName) // 'Bar Foo'
 
 const watcher = watch(data.person, 'fullName', value => {
-  console.log(value); // 'Baz Foo'
+	console.log(value); // 'Baz Foo'
 });
 
 data.person.firstName = 'Baz';
