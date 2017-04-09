@@ -7,30 +7,32 @@
 import {observe, set, unset, watch, ignore} from 'reaktiv';
 
 const data = {
-  firstName: 'Bar',
-  lastName: 'Foo',
-  fullName() {
-    return `${data.firstName} ${data.lastName}`;
-  }
+  person: {
+		firstName: 'Bar',
+		lastName: 'Foo',
+		fullName() {
+			return `${data.person.firstName} ${data.person.lastName}`;
+		}
+	}
 };
 
 observe(data);
 
-console.log(data.fullName) // 'Bar Foo'
+console.log(data.person.fullName) // 'Bar Foo'
 
-const watcher = watch(data, 'fullName', value => {
+const watcher = watch(data.person, 'fullName', value => {
   console.log(value); // 'Baz Foo'
 });
 
-data.firstName = 'Baz';
+data.person.firstName = 'Baz';
 
-set(data, 'age', 34); // Add a new property to the object
+set(data.person, 'age', 34); // Add a new property to the object
 
-console.log(data.age); // 34
+console.log(data.person.age); // 34
 
-unset(data, 'age'); // Delete a property
+unset(data.person, 'age'); // Delete a property
 
-console.log(data.age); // undefined
+console.log(data.person.age); // undefined
 
 ignore(watcher); // Unsubscribe the watcher from all its dependencies
 ```
