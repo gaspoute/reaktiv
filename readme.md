@@ -43,8 +43,12 @@ Makes reactive all properties of an object.
 ### set(object, key, value)
 Adds a new property to an object and notifies watchers if the property doesn't already exist.
 
+__Warning:__ The object cannot be a root object.
+
 ### unset(object, key)
 Deletes a property from an object and notifies watchers.
+
+__Warning:__ The object cannot be a root object.
 
 ### watch(object, path, callback, [options])
 Returns a watcher that watches a property of an object.
