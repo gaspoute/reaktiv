@@ -49,7 +49,8 @@ function reactive(object, key, value = object[key]) {
 }
 
 function dependEach(values, watcher) {
-	for (const value of values) {
+	for (let i = 0; i < values.length; ++i) {
+		const value = values[i];
 		if (value._dependency) {
 			depend(value._dependency, watcher);
 		}
@@ -69,8 +70,8 @@ function depend(dependency, watcher) {
 }
 
 function notify({subscriptions}) {
-	for (const subscription of subscriptions) {
-		inform(subscription);
+	for (let i = 0; i < subscriptions.length; ++i) {
+		inform(subscriptions[i]);
 	}
 }
 
@@ -98,7 +99,9 @@ function inspect(value, options = {}) {
 	if (Array.isArray(value)) {
 		inspectEach(value, options);
 	} else {
-		for (const key of Object.keys(value)) {
+		const keys = Object.keys(value);
+		for (let i = 0; i < keys.length; ++i) {
+			const key = keys[i];
 			if (typeof value[key] === 'function') {
 				computed(value, key);
 			} else {
@@ -110,8 +113,8 @@ function inspect(value, options = {}) {
 }
 
 function inspectEach(values, options) {
-	for (const value of values) {
-		observe(value, options);
+	for (let i = 0; i < values.length; ++i) {
+		observe(values[i], options);
 	}
 }
 
@@ -147,7 +150,8 @@ function getValue(watcher) {
 
 function cleanUp(watcher, oldDependencies) {
 	const removedDependencies = oldDependencies.filter(oldDependency => !watcher.dependencies.includes(oldDependency));
-	for (const removedDependency of removedDependencies) {
+	for (let i = 0; i < removedDependencies.length; ++i) {
+		const removedDependency = removedDependencies[i];
 		const index = removedDependency.subscriptions.indexOf(watcher);
 		removedDependency.subscriptions.splice(index, 1);
 	}
@@ -166,15 +170,16 @@ function traverse(value, seen = []) {
 	if (Array.isArray(value)) {
 		traverseEach(value, seen);
 	} else {
-		for (const key of Object.keys(value)) {
-			traverse(value[key], seen);
+		const keys = Object.keys(value);
+		for (let i = 0; i < keys.length; ++i) {
+			traverse(value[keys[i]], seen);
 		}
 	}
 }
 
 function traverseEach(values, seen) {
-	for (const value of values) {
-		traverse(value, seen);
+	for (let i = 0; i < values.length; ++i) {
+		traverse(values[i], seen);
 	}
 }
 
@@ -208,8 +213,8 @@ function computed(object, key) {
 			}
 			const target = peek(targets);
 			if (target) {
-				for (const dependency of watcher.dependencies) {
-					depend(dependency, target);
+				for (let i = 0; i < watcher.dependencies.length; ++i) {
+					depend(watcher.dependencies[i], target);
 				}
 			}
 			return watcher.value;
@@ -257,7 +262,8 @@ function ignore(watcher) {
 	if (!watcher.active) {
 		return;
 	}
-	for (const dependency of watcher.dependencies) {
+	for (let i = 0; i < watcher.dependencies.length; ++i) {
+		const dependency = watcher.dependencies[i];
 		dependency.subscriptions = dependency.subscriptions.filter(subscription => subscription !== watcher);
 	}
 	watcher.active = false;
