@@ -33,6 +33,10 @@ function reactive(object, key, value = object[key]) {
 			return getter ? getter.call(object) : value;
 		},
 		set(newValue) {
+			const oldValue = getter ? getter.call(object) : value;
+			if (newValue === oldValue) {
+				return;
+			}
 			if (setter) {
 				setter.call(object, newValue);
 			} else {
