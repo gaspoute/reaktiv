@@ -234,7 +234,7 @@ function set(object, key, value) {
 		object[key] = value;
 		return value;
 	}
-	if (!object._seed) { // Cannot set a new property to a seed
+	if (object._seed) { // Cannot set a new property to a seed
 		console.warn('Cannot set a new property to a seed');
 		return value;
 	}
@@ -251,7 +251,7 @@ function unset(object, key) {
 	if (!object._dependency) {
 		return;
 	}
-	if (!object._seed) {
+	if (object._seed) {
 		console.warn('Cannot delete a property from a seed');
 		return;
 	}
