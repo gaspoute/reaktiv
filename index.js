@@ -149,13 +149,8 @@ function cleanUp(watcher, oldDependencies) {
 	const removedDependencies = oldDependencies.filter(oldDependency => !watcher.dependencies.includes(oldDependency));
 	for (const removedDependency of removedDependencies) {
 		const index = removedDependency.subscriptions.indexOf(watcher);
-		const subscriptions = [
-			...removedDependency.subscriptions.slice(0, index),
-			...removedDependency.subscriptions.slice(index + 1)
-		];
-		Object.assign(removedDependency, {subscriptions});
+		removedDependency.subscriptions.splice(index, 1);
 	}
-
 }
 
 function traverse(value, seen = []) {
@@ -186,21 +181,19 @@ function traverseEach(values, seen) {
 function inform(watcher) {
 	const {value: oldValue} = watcher;
 	if (watcher.lazy) {
-		Object.assign(watcher, {dirty: true});
+		watcher.dirty = true;
 	} else if (watcher.active) {
 		const value = getValue(watcher);
 		if (oldValue !== value || isPlainObject(value) || watcher.deep) {
-			Object.assign(watcher, {value});
+			watcher.value = value;
 			watcher.update(value, oldValue);
 		}
 	}
 }
 
 function evaluate(watcher) {
-	Object.assign(watcher, {
-		dirty: false,
-		value: getValue(watcher)
-	});
+	watcher.dirty = false;
+	watcher.value = getValue(watcher);
 }
 
 function computed(object, key) {
@@ -249,12 +242,12 @@ function unset(object, key) {
 	if (!has(object, key)) {
 		return;
 	}
-	if (!object._seed) {
-		console.warn('Cannot delete a property from a seed');
-		return;
-	}
 	delete object[key];
 	if (!object._dependency) {
+		return;
+	}
+	if (!object._seed) {
+		console.warn('Cannot delete a property from a seed');
 		return;
 	}
 	notify(object._dependency);
@@ -265,10 +258,9 @@ function ignore(watcher) {
 		return;
 	}
 	for (const dependency of watcher.dependencies) {
-		const subscriptions = dependency.subscriptions.filter(subscription => subscription !== watcher);
-		Object.assign(dependency, {subscriptions});
+		dependency.subscriptions = dependency.subscriptions.filter(subscription => subscription !== watcher);
 	}
-	Object.assign(watcher, {active: false});
+	watcher.active = false;
 }
 
 export {targets, observe, watch, ignore, set, unset};
