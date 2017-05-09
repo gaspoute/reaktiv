@@ -226,12 +226,12 @@ function computed(object, key) {
 }
 
 function set(object, key, value) {
-	if (object._dependency && !object._seed) {
-		console.warn('Cannot set a new property to a seed');
-		return value;
-	}
 	if (has(object, key)) {
 		object[key] = value;
+		return value;
+	}
+	if (object._dependency && !object._seed) {
+		console.warn('Cannot add a new property to a seed');
 		return value;
 	}
 	if (!object._dependency) {
