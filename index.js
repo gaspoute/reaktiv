@@ -1,15 +1,10 @@
 import isPlainObject from 'is-plain-obj';
 import dotProp from 'dot-prop';
+import {targets, peek} from './targets';
 
 const {has, get} = dotProp;
 
 // Inspired by Vue.js (https://vuejs.org)
-
-const targets = [];
-
-function peek(stack) {
-	return stack[stack.length - 1];
-}
 
 function reactive(object, key, value = object[key]) {
 	const dependency = {subscriptions: []};
@@ -268,4 +263,4 @@ function ignore(watcher) {
 	watcher.active = false;
 }
 
-export {targets, observe, watch, ignore, set, unset};
+export {observe, watch, ignore, set, unset};
