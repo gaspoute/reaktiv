@@ -97,7 +97,7 @@ function inspect(value, options = {}) {
 		Object.defineProperty(value, '_seed', {value: seed});
 	}
 	if (Array.isArray(value)) {
-		inspectEach(value, options);
+		inspectEach(value, Object.assign(options, {seed: value}));
 	} else {
 		const keys = Object.keys(value);
 		for (let i = 0; i < keys.length; ++i) {
