@@ -215,21 +215,6 @@ describe('set/unset', () => {
 	afterEach(() => {
 		warn.restore();
 	});
-	it('should warn when adding a new property to a seed', () => {
-		set(object, 'd', 3);
-		set(object.a, 'e', 4);
-		expect(warn.calledOnce).to.be.true;
-		expect(warn.calledWith('Cannot add a new property to a seed')).to.be.true;
-		expect(object).to.not.have.property('d');
-		expect(object).to.have.deep.property('a.e', 4);
-	});
-	it('should warn when deleting a property from a seed', () => {
-		unset(object, 'a');
-		unset(object.a, 'b');
-		expect(warn.calledOnce).to.be.true;
-		expect(warn.calledWith('Cannot delete a property from a seed')).to.be.true;
-		expect(object).to.have.property('a').and.deep.equal({c: 2});
-	});
 });
 describe('watch', () => {
 	let data;

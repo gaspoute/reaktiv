@@ -224,10 +224,6 @@ function set(object, key, value) {
 		object[key] = value;
 		return object;
 	}
-	if (object._dependency && !object._seed) {
-		console.warn('Cannot add a new property to a seed');
-		return value;
-	}
 	if (!object._dependency) {
 		object[key] = value;
 		return object;
