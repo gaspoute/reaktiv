@@ -1,6 +1,7 @@
 import {expect} from 'chai';
-import {spy} from 'sinon';
-import {targets, observe, watch, ignore, set, unset} from './index';
+import {spy, stub} from 'sinon';
+import {targets} from './targets';
+import {observe, watch, ignore, set, unset} from './index';
 import dotProp from 'dot-prop';
 
 const {has, get} = dotProp;
@@ -195,6 +196,39 @@ describe('observe', () => {
 		expect(object2.b).to.equal(2);
 		unset(object2, 'a');
 		expect(has(object2, 'a')).to.be.false;
+	});
+
+});
+describe('set/unset', () => {
+	let object;
+	let warn;
+	beforeEach(() => {
+		object = {
+			a: {
+				b: 1,
+				c: 2
+			}
+		};
+		observe(object);
+		warn = stub(console, 'warn');
+	});
+	afterEach(() => {
+		warn.restore();
+	});
+	it('should warn when adding a new property to a seed', () => {
+		set(object, 'd', 3);
+		set(object.a, 'e', 4);
+		expect(warn.calledOnce).to.be.true;
+		expect(warn.calledWith('Cannot add a new property to a seed')).to.be.true;
+		expect(object).to.not.have.property('d');
+		expect(object).to.have.deep.property('a.e', 4);
+	});
+	it('should warn when deleting a property from a seed', () => {
+		unset(object, 'a');
+		unset(object.a, 'b');
+		expect(warn.calledOnce).to.be.true;
+		expect(warn.calledWith('Cannot delete a property from a seed')).to.be.true;
+		expect(object).to.have.property('a').and.deep.equal({c: 2});
 	});
 });
 describe('watch', () => {

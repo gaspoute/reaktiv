@@ -1,15 +1,10 @@
 import isPlainObject from 'is-plain-obj';
 import dotProp from 'dot-prop';
+import {targets, peek} from './targets';
 
 const {has, get} = dotProp;
 
 // Inspired by Vue.js (https://vuejs.org)
-
-const targets = [];
-
-function peek(stack) {
-	return stack[stack.length - 1];
-}
 
 function reactive(object, key, value = object[key]) {
 	const dependency = {subscriptions: []};
@@ -86,15 +81,14 @@ function inspect(value, options = {}) {
 	if (value._dependency) {
 		return value;
 	}
-	const {seed} = options;
 	const _dependency = {subscriptions: []};
 	Object.defineProperty(value, '_dependency', {value: _dependency});
-	if (!seed && !value._watchers) {
+	if (!options.seed && !value._watchers) {
 		const _watchers = [];
 		Object.defineProperty(value, '_watchers', {value: _watchers});
 	}
-	if (seed && !value._seed) {
-		Object.defineProperty(value, '_seed', {value: seed});
+	if (options.seed && !value._seed) {
+		Object.defineProperty(value, '_seed', {value: options.seed});
 	}
 	if (Array.isArray(value)) {
 		inspectEach(value, Object.assign(options, {seed: value}));
@@ -136,15 +130,15 @@ function watch(object, path, update, options = {}) {
 }
 
 function getValue(watcher) {
-	targets.push(watcher);
 	const oldDependencies = [...watcher.dependencies];
 	watcher.dependencies.length = 0;
+	targets.push(watcher);
 	const value = watcher.getter();
 	if (watcher.deep) {
 		traverse(value);
 	}
-	cleanUp(watcher, oldDependencies);
 	targets.pop();
+	cleanUp(watcher, oldDependencies);
 	return value;
 }
 
@@ -230,6 +224,10 @@ function set(object, key, value) {
 		object[key] = value;
 		return object;
 	}
+	if (object._dependency && !object._seed) {
+		console.warn('Cannot add a new property to a seed');
+		return value;
+	}
 	if (!object._dependency) {
 		object[key] = value;
 		return object;
@@ -262,4 +260,4 @@ function ignore(watcher) {
 	watcher.active = false;
 }
 
-export {targets, observe, watch, ignore, set, unset};
+export {observe, watch, ignore, set, unset};

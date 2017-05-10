@@ -2,7 +2,13 @@
   "name": "reaktiv",
   "version": "1.0.1",
   "description": "Watchers and computed properties",
-  "license": "MIT",
+	"author": "Gaspar Feron",
+	"license": "MIT",
+	"main": "index.js",
+	"repository": {
+    "type": "git",
+    "url": "git://github.com/gaspoute/reaktiv.git"
+  },
   "scripts": {
     "test": "mocha --compilers js:babel-register test.js",
     "cover": "istanbul cover _mocha -- --compilers js:babel-register test.js",
