@@ -226,10 +226,6 @@ function computed(object, key) {
 }
 
 function set(object, key, value) {
-	if (object._dependency && !object._seed) {
-		console.warn('Cannot set a new property to a seed');
-		return object;
-	}
 	if (has(object, key)) {
 		object[key] = value;
 		return object;
@@ -244,10 +240,6 @@ function set(object, key, value) {
 }
 
 function unset(object, key) {
-	if (object._dependency && !object._seed) {
-		console.warn('Cannot delete a property from a seed');
-		return object;
-	}
 	if (!has(object, key)) {
 		return object;
 	}
