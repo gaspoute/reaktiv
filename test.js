@@ -352,4 +352,13 @@ describe('watch/ignore', () => {
 		object.b = {c: 4};
 		expect(watcher.update.calledWith(7, 5)).to.be.true;
 	});
+	it('should not inform about the change a watcher when setting the same value to an object property', () => {
+		const watcher1 = watch(object, 'a', spy());
+		expect(watcher1.value).to.equal(1);
+		object.a = 1;
+		expect(watcher1.update.notCalled).to.be.true;
+		const watcher2 = watch(object, 'b', spy());
+		object.b = object.b;
+		expect(watcher2.update.notCalled).to.be.true;
+	});
 });
