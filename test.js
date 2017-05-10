@@ -1,22 +1,23 @@
 import {expect} from 'chai';
-import {spy, stub} from 'sinon';
+import {spy} from 'sinon';
 import {targets} from './targets';
 import {observe, watch, ignore, set, unset} from './index';
 import dotProp from 'dot-prop';
 
-const {has, get} = dotProp;
+const {get} = dotProp;
 
-function mock(object, path, update = spy()) {
-	const getter = () => get(object, path);
+function mock(object, path) {
 	return {
-		update,
+		update: spy(),
 		deep: false,
 		lazy: false,
 		active: true,
 		dirty: false,
 		dependencies: [],
-		getter,
-		value: getter()
+		getter() {
+			return get(object, path);
+		},
+		value: get(object, path)
 	};
 }
 
@@ -28,22 +29,25 @@ describe('observe', () => {
 		expect(observed2).to.be.undefined;
 	});
 	it('should observe an object', () => {
-		const object = {a: {}, b: {}};
+		const object = {
+			a: {},
+			b: {}
+		};
 		const observed1 = observe(object);
-		expect(observed1._dependency).to.exist;
-		expect(observed1.a._dependency).to.exist;
-		expect(observed1.b._dependency).to.exist;
+		expect(observed1).to.have.property('_dependency');
+		expect(observed1.a).to.have.property('_dependency');
+		expect(observed1.b).to.have.property('_dependency');
 		const observed2 = observe(object);
 		expect(observed2).to.equal(observed1);
 	});
-	it('should observe an object created by using `Object.create`', () => {
+	it('should observe a `null` object', () => {
 		const object = Object.create(null);
 		object.a = {};
 		object.b = {};
 		const observed1 = observe(object);
-		expect(observed1._dependency).to.exist;
-		expect(object.a._dependency).to.exist;
-		expect(object.b._dependency).to.exist;
+		expect(observed1).to.have.property('_dependency');
+		expect(object.a).to.have.property('_dependency');
+		expect(object.b).to.have.property('_dependency');
 		const observed2 = observe(object);
 		expect(observed2).to.equal(observed1);
 	});
@@ -63,7 +67,7 @@ describe('observe', () => {
 			}
 		});
 		const observed1 = observe(object);
-		expect(observed1._dependency).to.exist;
+		expect(observed1).to.have.property('_dependency');
 		count = 0;
 		get(object, 'a');
 		expect(count).to.equal(1);
@@ -74,7 +78,7 @@ describe('observe', () => {
 		object.a = 10;
 		expect(value).to.equal(10);
 	});
-	it('should observe a property with only a getter', () => {
+	it('should observe a object property with only a getter', () => {
 		const object = {};
 		Object.defineProperty(object, 'a', {
 			configurable: true,
@@ -84,14 +88,14 @@ describe('observe', () => {
 			}
 		});
 		const observed1 = observe(object);
-		expect(observed1._dependency).to.exist;
-		expect(object.a).to.equal(123);
+		expect(observed1).to.have.property('_dependency');
+		expect(object).to.have.property('a', 123);
 		const observed2 = observe(object);
 		expect(observed2).to.equal(observed1);
 		object.a = 101;
-		expect(object.a).to.equal(123);
+		expect(object).to.have.property('a', 123);
 	});
-	it('should observe a property with only a setter', () => {
+	it('should observe a object property with only a setter', () => {
 		const object = {};
 		let value = 10;
 		Object.defineProperty(object, 'a', {
@@ -102,8 +106,8 @@ describe('observe', () => {
 			}
 		});
 		const observed1 = observe(object);
-		expect(observed1._dependency).to.exist;
-		expect(object.a).to.be.undefined;
+		expect(observed1).to.have.property('_dependency');
+		expect(object).to.have.property('a').and.be.undefined;
 		const observed2 = observe(object);
 		expect(observed2).to.equal(observed1);
 		object.a = 100;
@@ -112,18 +116,23 @@ describe('observe', () => {
 	it('should observe an array', () => {
 		const array = [{}, {}];
 		const observed1 = observe(array);
-		expect(observed1._dependency).to.exist;
-		expect(array[0]._dependency).to.exist;
-		expect(array[1]._dependency).to.exist;
+		expect(observed1).to.have.property('_dependency');
+		expect(array[0]).to.have.property('_dependency');
+		expect(array[1]).to.have.property('_dependency');
 	});
 	it('should observe an object property change', () => {
-		const object = {a: {b: 2}, c: NaN};
+		const object = {
+			a: {
+				b: 2
+			},
+			c: NaN
+		};
 		observe(object);
 		const watcher = mock(object, 'a.b');
 		targets.push(watcher);
 		get(object, 'a.b');
 		targets.pop();
-		expect(watcher.dependencies.length).to.equal(3); // Why ? object.a + a + a.b
+		expect(watcher.dependencies).to.have.lengthOf(3); // Why ? object.a + a + a.b
 		object.a.b = 3;
 		expect(watcher.update.callCount).to.equal(1);
 		object.a = {b: 4};
@@ -133,7 +142,7 @@ describe('observe', () => {
 		get(object, 'a.b');
 		get(object, 'c');
 		targets.pop();
-		expect(watcher.dependencies.length).to.equal(4);
+		expect(watcher.dependencies).to.have.lengthOf(4);
 		object.a.b = 5;
 		expect(watcher.update.callCount).to.equal(3);
 		object.c = NaN;
@@ -155,53 +164,17 @@ describe('observe', () => {
 		observe(object);
 		const watcher = mock(object, 'a');
 		targets.push(watcher);
-		expect(object.a).to.equal(2);
+		expect(object).to.have.property('a', 2);
 		targets.pop();
 		object.a = 3;
 		expect(object.value).to.equal(3);
 		object.value = 5;
-		expect(object.a).to.equal(5);
+		expect(object).to.have.property('a', 5);
 	});
-	it('should observe a set/unset object property', () => {
-		const object1 = {
-			data: {
-				a: {b: 1}
-			}
-		};
-		observe(object1);
-		const watcher1 = mock(object1, 'data');
-		targets.push(watcher1);
-		get(object1, 'data');
-		targets.pop();
-		set(object1.data, 'b', 2);
-		expect(object1.data.b).to.equal(2);
-		expect(watcher1.update.callCount).to.equal(1);
-		unset(object1.data, 'a');
-		expect(has(object1.data, 'a')).to.be.false;
-		expect(watcher1.update.callCount).to.equal(2);
-		// Set an existing property.
-		set(object1.data, 'b', 3);
-		expect(object1.data.b).to.equal(3);
-		expect(watcher1.update.callCount).to.equal(2);
-		// Set a nonexistent property.
-		set(object1.data, 'c', 1);
-		expect(object1.data.c).to.equal(1);
-		expect(watcher1.update.callCount).to.equal(3);
-		// Ignore the deletion of a nonexistent property.
-		unset(object1.data, 'a');
-		expect(watcher1.update.callCount).to.equal(3);
-		// Set/delete a property of a non-observed object.
-		const object2 = {a: 1};
-		set(object2, 'b', 2);
-		expect(object2.b).to.equal(2);
-		unset(object2, 'a');
-		expect(has(object2, 'a')).to.be.false;
-	});
-
 });
 describe('set/unset', () => {
 	let object;
-	let warn;
+	let watcher;
 	beforeEach(() => {
 		object = {
 			a: {
@@ -210,140 +183,173 @@ describe('set/unset', () => {
 			}
 		};
 		observe(object);
-		warn = stub(console, 'warn');
+		watcher = mock(object, 'a');
+		targets.push(watcher);
+		get(object, 'a');
+		targets.pop();
 	});
-	afterEach(() => {
-		warn.restore();
+	it('should observe a set/unset object property', () => {
+		set(object.a, 'd', 3);
+		expect(object.a).to.have.property('d', 3);
+		expect(watcher.update.callCount).to.equal(1);
+		unset(object.a, 'b');
+		expect(object.a).to.not.have.property('b');
+		expect(watcher.update.callCount).to.equal(2);
+	});
+	it('should set an existing object property', () => {
+		set(object.a, 'b', 4);
+		expect(object.a).to.have.property('b', 4);
+		expect(watcher.update.called).to.be.false;
+	});
+	it('should set a nonexistent object property', () => {
+		set(object.a, 'e', 5);
+		expect(object.a).to.have.property('e', 5);
+		expect(watcher.update.called).to.be.true;
+	});
+	it('should ignore the deletion of a nonexistent object property', () => {
+		unset(object.a, 'f');
+		expect(watcher.update.called).to.be.false;
+	});
+	it('should set/unset a property of a non-observed object', () => {
+		const unobserved = {a: 1};
+		set(unobserved, 'b', 2);
+		expect(unobserved).to.have.property('b', 2);
+		unset(unobserved, 'a');
+		expect(unobserved).to.not.have.property('a');
 	});
 });
-describe('watch', () => {
-	let data;
-	let update;
+describe('watch/ignore', () => {
+	let object;
 	beforeEach(() => {
-		data = {
+		object = {
 			a: 1,
-			b: {c: 2, d: 4},
+			b: {
+				c: 2,
+				d: 4
+			},
 			e() {
-				return data.a + data.b.c;
+				return object.a + object.b.c;
 			},
 			f: [[]]
 		};
-		update = spy();
-		observe(data);
+		observe(object);
 	});
-	it('should watch a property', () => {
-		const watcher = watch(data, 'b.c', update);
+	it('should watch an object property', () => {
+		const watcher = watch(object, 'b.c', spy());
 		expect(watcher.value).to.equal(2);
-		data.b.c = 3;
+		object.b.c = 3;
 		expect(watcher.value).to.equal(3);
-		expect(update.calledWith(3, 2)).to.be.true;
-		data.b = {c: 4};
+		expect(watcher.update.calledWith(3, 2)).to.be.true;
+		object.b = {c: 4};
 		expect(watcher.value).to.equal(4);
-		expect(update.calledWith(4, 3)).to.be.true;
+		expect(watcher.update.calledWith(4, 3)).to.be.true;
 	});
-	it('should watch a nonexistent property, set later', () => {
-		const watcher = watch(data, 'b.e', update);
+	it('should watch a nonexistent object property, set later', () => {
+		const watcher = watch(object, 'b.e', spy());
 		expect(watcher.value).to.be.undefined;
-		set(data.b, 'e', 123);
+		set(object.b, 'e', 123);
 		expect(watcher.value).to.equal(123);
-		expect(update.calledWith(123, undefined)).to.be.true;
+		expect(watcher.update.calledWith(123, undefined)).to.be.true;
 	});
-	it('should delete a watched property', () => {
-		const watcher = watch(data, 'b.c', update);
+	it('should unset a watched object property', () => {
+		const watcher = watch(object, 'b.c', spy());
 		expect(watcher.value).to.equal(2);
-		unset(data.b, 'c');
+		unset(object.b, 'c');
 		expect(watcher.value).to.be.undefined;
-		expect(update.calledWith(undefined, 2)).to.be.true;
+		expect(watcher.update.calledWith(undefined, 2)).to.be.true;
 	});
-	it('should deeply watch a property', () => {
-		watch(data, 'b', update, {deep: true});
-		const oldB = data.b;
-		data.b.c = {d: 4};
-		expect(update.calledWith(data.b, data.b)).to.be.true;
-		data.b = {c: [{a: 1}]};
-		expect(update.calledWith(data.b, oldB)).to.be.true;
-		expect(update.callCount).to.equal(2);
-		data.b.c[0].a = 2;
-		expect(update.calledWith(data.b, data.b)).to.be.true;
-		expect(update.callCount).to.equal(3);
+	it('should deeply watch an object property', () => {
+		const watcher = watch(object, 'b', spy(), {deep: true});
+		const oldB = object.b;
+		object.b.c = {d: 4};
+		expect(watcher.update.calledWith(object.b, object.b)).to.be.true;
+		object.b = {
+			c: [{a: 1}]
+		};
+		expect(watcher.update.calledWith(object.b, oldB)).to.be.true;
+		expect(watcher.update.callCount).to.equal(2);
+		object.b.c[0].a = 2;
+		expect(watcher.update.calledWith(object.b, object.b)).to.be.true;
+		expect(watcher.update.callCount).to.equal(3);
 	});
-	it('should deeply watch a property with circular references', () => {
-		watch(data, 'b', update, {deep: true});
-		set(data.b, '_', data.b);
-		expect(update.calledWith(data.b, data.b)).to.be.true;
-		expect(update.callCount).to.equal(1);
-		data.b._.c = 1;
-		expect(update.calledWith(data.b, data.b)).to.be.true;
-		expect(update.callCount).to.equal(2);
+	it('should deeply watch an object property with circular references', () => {
+		const watcher = watch(object, 'b', spy(), {deep: true});
+		set(object.b, '_', object.b);
+		expect(watcher.update.calledWith(object.b, object.b)).to.be.true;
+		expect(watcher.update.callCount).to.equal(1);
+		object.b._.c = 1;
+		expect(watcher.update.calledWith(object.b, object.b)).to.be.true;
+		expect(watcher.update.callCount).to.equal(2);
 	});
-	it('should inform about the change a non-deep watcher when adding/deleting a property', () => {
-		watch(data, 'b', update);
-		set(data.b, 'e', 123);
-		expect(update.calledWith(data.b, data.b)).to.be.true;
-		expect(update.callCount).to.equal(1);
-		unset(data.b, 'e');
-		expect(update.callCount).to.equal(2);
+	it('should inform about the change a non-deep watcher when setting/unsetting an object property', () => {
+		const watcher = watch(object, 'b', spy());
+		set(object.b, 'e', 123);
+		expect(watcher.update.calledWith(object.b, object.b)).to.be.true;
+		expect(watcher.update.callCount).to.equal(1);
+		unset(object.b, 'e');
+		expect(watcher.update.callCount).to.equal(2);
 	});
 	it('should watch a computed property', () => {
-		const watcher = watch(data, () => {
-			return data.a + data.b.d;
-		}, update);
+		const watcher = watch(object, () => {
+			return object.a + object.b.d;
+		}, spy());
 		expect(watcher.value).to.equal(5);
-		data.a = 2;
-		expect(update.calledWith(6, 5)).to.be.true;
-		data.b = {d: 2};
-		expect(update.calledWith(4, 6)).to.be.true;
+		object.a = 2;
+		expect(watcher.update.calledWith(6, 5)).to.be.true;
+		object.b = {d: 2};
+		expect(watcher.update.calledWith(4, 6)).to.be.true;
 	});
-	it('should inform about the change a deep watcher when adding/deleting an element to/from an array', () => {
-		watch(data, 'f', update, {deep: true});
+	it('should inform about the change a deep watcher when setting/unsetting an element to/from an array', () => {
+		const watcher = watch(object, 'f', spy(), {deep: true});
 		const element = {a: 1};
-		data.f = data.f.concat(element);
-		expect(data.f[1]).to.equal(element);
-		expect(update.callCount).to.equal(1);
-		data.f[1].a = {b: 2};
-		expect(data.f[1].a.b).to.equal(2);
-		expect(update.callCount).to.equal(2);
-		data.f = [
+		object.f = object.f.concat(element);
+		expect(object.f[1]).to.equal(element);
+		expect(watcher.update.callCount).to.equal(1);
+		const nested = {b: 2};
+		object.f[1].a = nested;
+		expect(object.f[1]).to.have.property('a', nested);
+		expect(watcher.update.callCount).to.equal(2);
+		object.f = [
 			[2],
-			...data.f.slice(1)
+			...object.f.slice(1)
 		];
-		expect(data.f[0][0]).to.equal(2);
-		expect(update.callCount).to.equal(3);
-		data.f = [];
-		expect(data.f).to.be.empty;
-		expect(update.callCount).to.equal(4);
+		expect(object.f[0][0]).to.equal(2);
+		expect(watcher.update.callCount).to.equal(3);
+		object.f = [];
+		expect(object.f).to.be.empty;
+		expect(watcher.update.callCount).to.equal(4);
 	});
 	it('should ignore a watcher', () => {
-		const watcher = watch(data, 'b.c', update);
-		data.b.c = 3;
+		const watcher = watch(object, 'b.c', spy());
+		object.b.c = 3;
 		expect(watcher.active).to.be.true;
-		expect(update.callCount).to.equal(1);
+		expect(watcher.update.callCount).to.equal(1);
 		ignore(watcher);
 		expect(watcher.active).to.be.false;
-		expect(update.callCount).to.equal(1);
+		expect(watcher.update.callCount).to.equal(1);
 	});
 	it('should ignore an inactive watcher', () => {
-		const watcher = watch(data, 'b.c', update);
+		const watcher = watch(object, 'b.c', spy());
 		ignore(watcher);
 		expect(watcher.active).to.be.false;
 		ignore(watcher);
 		expect(watcher.active).to.be.false;
-		expect(update.notCalled).to.be.true;
+		expect(watcher.update.notCalled).to.be.true;
 	});
 	it('should compute an object property', () => {
-		expect(data.a).to.equal(1);
-		expect(data.b.c).to.equal(2);
-		expect(data.e).to.equal(3);
-		data.a = 3;
-		expect(data.a).to.equal(3);
-		expect(data.e).to.equal(5);
+		expect(object).to.have.property('a', 1);
+		expect(object.b).to.have.property('c', 2);
+		expect(object).to.have.property('e', 3);
+		object.a = 3;
+		expect(object).to.have.property('a', 3);
+		expect(object).to.have.property('e', 5);
 	});
-	it('should watch a computed object property', () => {
-		const watcher = watch(data, 'e', update);
+	it('should watch a computed property', () => {
+		const watcher = watch(object, 'e', spy());
 		expect(watcher.value).to.equal(3);
-		data.a = 3;
-		expect(update.calledWith(5, 3)).to.be.true;
-		data.b = {c: 4};
-		expect(update.calledWith(7, 5)).to.be.true;
+		object.a = 3;
+		expect(watcher.update.calledWith(5, 3)).to.be.true;
+		object.b = {c: 4};
+		expect(watcher.update.calledWith(7, 5)).to.be.true;
 	});
 });
