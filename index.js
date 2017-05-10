@@ -245,7 +245,6 @@ function set(object, key, value) {
 
 function unset(object, key) {
 	if (object._dependency && !object._seed) {
-		console.log(object);
 		console.warn('Cannot delete a property from a seed');
 		return object;
 	}
