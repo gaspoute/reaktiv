@@ -228,34 +228,36 @@ function computed(object, key) {
 function set(object, key, value) {
 	if (object._dependency && !object._seed) {
 		console.warn('Cannot set a new property to a seed');
-		return value;
+		return object;
 	}
 	if (has(object, key)) {
 		object[key] = value;
-		return value;
+		return object;
 	}
 	if (!object._dependency) {
 		object[key] = value;
-		return value;
+		return object;
 	}
 	reactive(object, key, value);
 	notify(object._dependency);
-	return value;
+	return object;
 }
 
 function unset(object, key) {
 	if (object._dependency && !object._seed) {
+		console.log(object);
 		console.warn('Cannot delete a property from a seed');
-		return;
+		return object;
 	}
 	if (!has(object, key)) {
-		return;
+		return object;
 	}
 	delete object[key];
 	if (!object._dependency) {
-		return;
+		return object;
 	}
 	notify(object._dependency);
+	return object;
 }
 
 function ignore(watcher) {
