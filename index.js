@@ -222,15 +222,15 @@ function computed(object, key) {
 function set(object, key, value) {
 	if (has(object, key)) {
 		object[key] = value;
-		return object;
+		return value;
 	}
 	if (!object._dependency) {
 		object[key] = value;
-		return object;
+		return value;
 	}
 	reactive(object, key, value);
 	notify(object._dependency);
-	return object;
+	return value;
 }
 
 function unset(object, key) {
@@ -239,10 +239,9 @@ function unset(object, key) {
 	}
 	delete object[key];
 	if (!object._dependency) {
-		return object;
+		return;
 	}
 	notify(object._dependency);
-	return object;
 }
 
 function ignore(watcher) {
