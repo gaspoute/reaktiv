@@ -46,7 +46,7 @@ function reactive(object, key, value = object[key]) {
 function dependEach(values, watcher) {
 	for (let i = 0; i < values.length; ++i) {
 		const value = values[i];
-		if (value._dependency) {
+		if (value && value._dependency) {
 			depend(value._dependency, watcher);
 		}
 		if (Array.isArray(value)) {
