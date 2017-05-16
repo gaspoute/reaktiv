@@ -235,7 +235,7 @@ function set(object, key, value) {
 
 function unset(object, key) {
 	if (!has(object, key)) {
-		return object;
+		return;
 	}
 	delete object[key];
 	if (!object._dependency) {
