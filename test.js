@@ -230,7 +230,21 @@ describe('watch/ignore', () => {
 			e() {
 				return object.a + object.b.c;
 			},
-			f: [[]]
+			f: [[]],
+			g: {
+				get() {
+					return object.a * object.b.c;
+				},
+				set(value) {
+					object.a = value / object.b.c;
+					object.b.c = value / object.a;
+				}
+			},
+			h: {
+				get() {
+					return object.a + object.b.c;
+				}
+			}
 		};
 		observe(object);
 	});
@@ -360,5 +374,21 @@ describe('watch/ignore', () => {
 		const watcher2 = watch(object, 'b', spy());
 		object.b = object.b;
 		expect(watcher2.update.notCalled).to.be.true;
+	});
+	it('should set computed property', () => {
+		expect(object).to.have.property('a', 1);
+		expect(object.b).to.have.property('c', 2);
+		expect(object).to.have.property('g', 2);
+		object.g = 4;
+		expect(object).to.have.property('a', 2);
+		expect(object.b).to.have.property('c', 2);
+	});
+	it('should compute an object property with only a getter', () => {
+		expect(object).to.have.property('a', 1);
+		expect(object.b).to.have.property('c', 2);
+		expect(object).to.have.property('h', 3);
+		object.a = 3;
+		expect(object).to.have.property('a', 3);
+		expect(object).to.have.property('h', 5);
 	});
 });

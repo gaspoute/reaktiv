@@ -3,6 +3,7 @@ import dotProp from 'dot-prop';
 import {targets, peek} from './targets';
 
 const {has, get} = dotProp;
+const noop = () => {};
 
 // Inspired by Vue.js (https://vuejs.org)
 
@@ -96,7 +97,7 @@ function inspect(value, options = {}) {
 		const keys = Object.keys(value);
 		for (let i = 0; i < keys.length; ++i) {
 			const key = keys[i];
-			if (typeof value[key] === 'function') {
+			if (isComputed(value[key])) {
 				computed(value, key);
 			} else {
 				reactive(value, key);
@@ -104,6 +105,10 @@ function inspect(value, options = {}) {
 		}
 	}
 	return value;
+}
+
+function isComputed(value) {
+	return typeof value === 'function' || (typeof value === 'object' && value.get);
 }
 
 function inspectEach(values, options) {
@@ -196,8 +201,8 @@ function evaluate(watcher) {
 }
 
 function computed(object, key) {
-	const compute = object[key];
-	const watcher = watch(object, compute, () => {}, {lazy: true});
+	const compute = typeof object[key] === 'function' ? object[key] : object[key].get;
+	const watcher = watch(object, compute, noop, {lazy: true});
 	return Object.defineProperty(object, key, {
 		configurable: true,
 		enumerable: true,
@@ -213,9 +218,7 @@ function computed(object, key) {
 			}
 			return watcher.value;
 		},
-		set() {
-			// Nothing to do !
-		}
+		set: typeof object[key] === 'function' ? noop : (object[key].set || noop)
 	});
 }
 
