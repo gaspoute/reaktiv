@@ -108,7 +108,7 @@ function inspect(value, options = {}) {
 }
 
 function isComputed(value) {
-	return typeof value === 'function' || (typeof value === 'object' && value.get);
+	return typeof value === 'function' || (isPlainObject(value) && value.get);
 }
 
 function inspectEach(values, options) {
