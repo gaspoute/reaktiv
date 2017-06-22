@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {spy} from 'sinon';
-import {targets} from './targets';
-import {observe, watch, ignore, set, unset} from './index';
+import {targets} from '../src/targets';
+import {observe, watch, ignore, set, unset} from '../src';
 import dotProp from 'dot-prop';
 
 const {get} = dotProp;
